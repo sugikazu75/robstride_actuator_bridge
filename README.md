@@ -14,7 +14,7 @@ sudo apt-get install ros-noetic-socketcan-bridge
 
 ### Use of slcan in Linux Ubuntu
 
-1. Connect the MKS CANable V2.0 module to the ubuntu system, and send commands to query the device:
+1. Connect the can module to the ubuntu system, and send commands to query the device:
    
 ```shell
 ls /dev/ttyACMx
