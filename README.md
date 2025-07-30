@@ -41,6 +41,11 @@ sudo ifconfig can0 up
 sudo ifconfig can0 txqueuelen 100
 ```
 
+### Use USB2CAN
+```shell
+sudo ip link set can0 up type can bitrate 1000000
+```
+
 ### Launch the launch file for the demo
 
 ```shell
