@@ -19,26 +19,31 @@ int main(int argc, char** argv)
   ros::NodeHandle nm;
   ros::Rate loop_rate(300);
 
-  std::vector<uint8_t> left_motor_ids = { 0x01, 0x02 };
+  std::vector<uint8_t> motor_ids = { 122, 123, 124, 125, 126, 127 };
+  std::vector<uint8_t> motor_types = { MotorType::Robstride03, MotorType::Robstride03, MotorType::Robstride00,
+                                       MotorType::Robstride00, MotorType::Robstride00, MotorType::Robstride00 };
 
-  std::shared_ptr<MotorControlSet> _left_controller =
-      std::make_shared<MotorControlSet>(&nm, "can1_rx", "can1_tx", left_motor_ids);
+  std::shared_ptr<MotorControlSet> motor_controller =
+      std::make_shared<MotorControlSet>(&nm, "can1_rx", "can1_tx", motor_ids, motor_types);
 
   ros::Duration(0.5).sleep();
   // enable the motor
-  for (int i = 0; i < Joint_Num; i++)
+  for (int i = 0; i < motor_ids.size(); i++)
   {
-    _left_controller->getMotor(i + 1).Enable_Motor();
-    std::cout << "Joint motor " << i + 1 << " is enabled." << std::endl;
+    motor_controller->getMotor(i).Enable_Motor();
+    std::cout << "Joint motor " << static_cast<int>(motor_ids.at(i)) << " with type "
+              << static_cast<int>(motor_types.at(i)) << " is enabled." << std::endl;
   }
   ros::Duration(0.1).sleep();
 
+  int id = 0;
+  int cnt = 0;
   while (ros::ok())
   {
-    // _left_controller->getMotor(1).RobStrite_Motor_Pos_control(1,1);
-    // _left_controller->getMotor(2).RobStrite_Motor_Pos_control(1,1);
-    _left_controller->getMotor(1).RobStrite_Motor_move_control(0, 0, 1, 0, 1);
-    _left_controller->getMotor(2).RobStrite_Motor_move_control(0, 0, 0.1, 0, 1);
+    motor_controller->getMotor(id).RobStrite_Motor_move_control(0, 0, 1.0, 0, 10);
+
+    id = (id + 1) % motor_ids.size();
+    cnt = (cnt + 1) % 1000;
 
     ros::spinOnce();
     loop_rate.sleep();

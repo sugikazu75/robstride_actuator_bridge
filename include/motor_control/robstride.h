@@ -9,16 +9,32 @@
 #include "stdint.h"
 #include "can_msgs/Frame.h"
 
-#define P_MIN -12.5f
-#define P_MAX 12.5f
-#define V_MIN -44.0f
-#define V_MAX 44.0f
-#define KP_MIN 0.0f
-#define KP_MAX 500.0f
-#define KD_MIN 0.0f
-#define KD_MAX 5.0f
-#define T_MIN -17.0f
-#define T_MAX 17.0f
+struct MotorLimits
+{
+  float P_MIN;
+  float P_MAX;
+  float V_MIN;
+  float V_MAX;
+  float KP_MIN;
+  float KP_MAX;
+  float KD_MIN;
+  float KD_MAX;
+  float T_MIN;
+  float T_MAX;
+};
+
+enum MotorType
+{
+  Cybergear = 0,
+  Robstride00,
+  Robstride03,
+};
+
+const std::map<MotorType, MotorLimits> motor_limit_map = {
+  { Cybergear, { -4 * M_PI, 4 * M_PI, -30.0f, 30.0f, 0.0f, 500.0f, 0.0f, 5.0f, -12.0f, 12.0f } },
+  { Robstride00, { -4 * M_PI, 4 * M_PI, -33.0f, 33.0f, 0.0f, 500.0f, 0.0f, 5.0f, -14.0f, 14.0f } },
+  { Robstride03, { -4 * M_PI, 4 * M_PI, -20.0f, 20.0f, 0.0f, 5000.0f, 0.0f, 100.0f, -60.0, 60.0 } },
+};
 
 #define Set_mode 'j'       //设置控制模式
 #define Set_parameter 'p'  //设置参数
@@ -98,9 +114,10 @@ typedef struct
 class RobStrite_Motor
 {
 private:
-  uint8_t CAN_ID;          // CAN ID   (默认127(0x7f) 可以通过上位机和通信类型1查看)
+  uint8_t CAN_ID;  // CAN ID   (默认127(0x7f) 可以通过上位机和通信类型1查看)
+  uint8_t motor_type_;
+  MotorLimits limits_;
   uint16_t Master_CAN_ID;  //主机ID  （会在初始化函数中设定为0x1F）
-  float (*Motor_Offset_MotoFunc)(float Motor_Tar);
 
   Motor_Set Motor_Set_All;  //设定值
 
@@ -114,9 +131,7 @@ public:
   data_read_write drw;
   uint8_t error_code;
 
-  RobStrite_Motor(uint8_t CAN_Id, ros::NodeHandle* node_handle, const std::string& command_tx);
-  RobStrite_Motor(float (*Offset_MotoFunc)(float Motor_Tar), uint8_t CAN_Id, ros::NodeHandle* node_handle,
-                  const std::string& command_tx);
+  RobStrite_Motor(uint8_t CAN_Id, MotorType type, ros::NodeHandle* node_handle, const std::string& command_tx);
   void RobStrite_Get_CAN_ID();
   void Set_RobStrite_Motor_parameter(uint16_t Index, float Value, char Value_mode);
   void Get_RobStrite_Motor_parameter(uint16_t Index);

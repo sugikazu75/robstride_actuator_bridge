@@ -31,22 +31,20 @@ float Byte_to_float(uint8_t* bytedata)
 }
 
 /*******************************RobStride Function************************************/
-RobStrite_Motor::RobStrite_Motor(uint8_t CAN_Id, ros::NodeHandle* node_handle, const std::string& command_tx)
+RobStrite_Motor::RobStrite_Motor(uint8_t CAN_Id, MotorType type, ros::NodeHandle* node_handle,
+                                 const std::string& command_tx)
 {
   CAN_ID = CAN_Id;
+  motor_type_ = type;
+
+  auto it = motor_limit_map.find(type);
+  if (it != motor_limit_map.end())
+    limits_ = it->second;
+  else
+    throw std::runtime_error("unknown MotorType");
+
   Master_CAN_ID = 0x00;
   Motor_Set_All.set_motor_mode = move_control_mode;
-
-  command_pub = node_handle->advertise<can_msgs::Frame>(command_tx, 100);
-}
-
-RobStrite_Motor::RobStrite_Motor(float (*Offset_MotoFunc)(float Motor_Tar), uint8_t CAN_Id,
-                                 ros::NodeHandle* node_handle, const std::string& command_tx)
-{
-  CAN_ID = CAN_Id;
-  Master_CAN_ID = 0x00;
-  Motor_Set_All.set_motor_mode = move_control_mode;
-  Motor_Offset_MotoFunc = Offset_MotoFunc;
 
   command_pub = node_handle->advertise<can_msgs::Frame>(command_tx, 100);
 }
@@ -58,9 +56,9 @@ void RobStrite_Motor::RobStrite_Motor_Analysis(uint8_t* DataFrame, uint32_t ID_E
     // count_num++;
     if (int((ID_ExtId & 0x3F000000) >> 24) == 2)
     {
-      Pos_Info.Angle = uint16_to_float(DataFrame[0] << 8 | DataFrame[1], P_MIN, P_MAX, 16);
-      Pos_Info.Speed = uint16_to_float(DataFrame[2] << 8 | DataFrame[3], V_MIN, V_MAX, 16);
-      Pos_Info.Torque = uint16_to_float(DataFrame[4] << 8 | DataFrame[5], T_MIN, T_MAX, 16);
+      Pos_Info.Angle = uint16_to_float(DataFrame[0] << 8 | DataFrame[1], limits_.P_MIN, limits_.P_MAX, 16);
+      Pos_Info.Speed = uint16_to_float(DataFrame[2] << 8 | DataFrame[3], limits_.V_MIN, limits_.V_MAX, 16);
+      Pos_Info.Torque = uint16_to_float(DataFrame[4] << 8 | DataFrame[5], limits_.T_MIN, limits_.T_MAX, 16);
       Pos_Info.Temp = (DataFrame[6] << 8 | DataFrame[7]) * 0.1;
       error_code = uint8_t((ID_ExtId & 0x3F0000) >> 16);
       Pos_Info.pattern = uint8_t((ID_ExtId & 0xC00000) >> 22);
@@ -164,16 +162,16 @@ void RobStrite_Motor::RobStrite_Motor_move_control(float Torque, float Angle, fl
   cansendata.is_rtr = false;
   cansendata.dlc = 0x08;
 
-  cansendata.id =
-      Communication_Type_MotionControl << 24 | float_to_uint(Motor_Set_All.set_Torque, T_MIN, T_MAX, 16) << 8 | CAN_ID;
-  cansendata.data[0] = float_to_uint(Motor_Set_All.set_angle, P_MIN, P_MAX, 16) >> 8;
-  cansendata.data[1] = float_to_uint(Motor_Set_All.set_angle, P_MIN, P_MAX, 16);
-  cansendata.data[2] = float_to_uint(Motor_Set_All.set_speed, V_MIN, V_MAX, 16) >> 8;
-  cansendata.data[3] = float_to_uint(Motor_Set_All.set_speed, V_MIN, V_MAX, 16);
-  cansendata.data[4] = float_to_uint(Motor_Set_All.set_Kp, KP_MIN, KP_MAX, 16) >> 8;
-  cansendata.data[5] = float_to_uint(Motor_Set_All.set_Kp, KP_MIN, KP_MAX, 16);
-  cansendata.data[6] = float_to_uint(Motor_Set_All.set_Kd, KD_MIN, KD_MAX, 16) >> 8;
-  cansendata.data[7] = float_to_uint(Motor_Set_All.set_Kd, KD_MIN, KD_MAX, 16);
+  cansendata.id = Communication_Type_MotionControl << 24 |
+                  float_to_uint(Motor_Set_All.set_Torque, limits_.T_MIN, limits_.T_MAX, 16) << 8 | CAN_ID;
+  cansendata.data[0] = float_to_uint(Motor_Set_All.set_angle, limits_.P_MIN, limits_.P_MAX, 16) >> 8;
+  cansendata.data[1] = float_to_uint(Motor_Set_All.set_angle, limits_.P_MIN, limits_.P_MAX, 16);
+  cansendata.data[2] = float_to_uint(Motor_Set_All.set_speed, limits_.V_MIN, limits_.V_MAX, 16) >> 8;
+  cansendata.data[3] = float_to_uint(Motor_Set_All.set_speed, limits_.V_MIN, limits_.V_MAX, 16);
+  cansendata.data[4] = float_to_uint(Motor_Set_All.set_Kp, limits_.KP_MIN, limits_.KP_MAX, 16) >> 8;
+  cansendata.data[5] = float_to_uint(Motor_Set_All.set_Kp, limits_.KP_MIN, limits_.KP_MAX, 16);
+  cansendata.data[6] = float_to_uint(Motor_Set_All.set_Kd, limits_.KD_MIN, limits_.KD_MAX, 16) >> 8;
+  cansendata.data[7] = float_to_uint(Motor_Set_All.set_Kd, limits_.KD_MIN, limits_.KD_MAX, 16);
 
   command_pub.publish(cansendata);
 }
