@@ -13,27 +13,6 @@
 #include "motor_control/MotorFeedback.h"
 #include "motor_control/robstride.h"
 
-typedef struct
-{
-  uint16_t state;
-  float pos;
-  float vel;
-  float tor;
-  float Kp;
-  float Kd;
-  float Tmos;
-  float Tcoil;
-} motor_state_t;
-
-typedef struct
-{
-  float pos_d;
-  float vel_d;
-  float tor_d;
-  float Kp;
-  float Kd;
-} motor_cmd_t;
-
 class MotorControlSet
 {
 public:
@@ -46,15 +25,13 @@ public:
   // create subscriber
   ros::Subscriber can_receive;
   ros::Subscriber command_bridge;
+
   // creat publisher
   ros::Publisher can_send;
   ros::Publisher robstride_state_pub;
 
   void can1_rx_Callback(can_msgs::Frame msg);
   void command_Callback(can_msgs::Frame msg);
-
-  std::vector<motor_state_t> motor_state_;
-  std::vector<motor_cmd_t> motor_cmd_;
 
   motor_control::MotorFeedback joint_feedback_;
 
