@@ -7,18 +7,20 @@
 MotorControlSet::MotorControlSet(ros::NodeHandle* node_handle, const std::string& can_rx, const std::string& can_tx,
                                  const std::vector<uint8_t>& motor_ids, const std::vector<uint8_t> motor_types)
 {
+  robstride_state_pub = node_handle->advertise<motor_control::MotorFeedback>("robstride_state", 100);
+
   can_receive = node_handle->subscribe(can_rx, 100, &MotorControlSet::can1_rx_Callback, this);
-  can_send = node_handle->advertise<can_msgs::Frame>(can_tx, 100);
-  command_bridge = node_handle->subscribe("robstride_cmd", 100, &MotorControlSet::command_Callback, this);
-  robstride_state_pub = node_handle->advertise<motor_control::MotorFeedback>("/robstride_state", 100);
+  command_sub_ = node_handle->subscribe("robstride_command", 100, &MotorControlSet::commandCallback, this);
 
   motor_ids_.clear();
   motors_.clear();
+  commands_.clear();
   for (int i = 0; i < motor_ids.size(); i++)
   {
     motor_ids_.push_back(motor_ids.at(i));
     motors_.push_back(RobStrite_Motor(static_cast<int>(motor_ids.at(i)), static_cast<MotorType>(motor_types.at(i)),
-                                      node_handle, "robstride_cmd"));
+                                      node_handle, can_tx));
+    commands_.push_back(motor_control::MotorCommand());
   }
 
   joint_feedback_.pos.resize(motor_ids_.size());
@@ -60,7 +62,20 @@ void MotorControlSet::can1_rx_Callback(can_msgs::Frame msg)
   robstride_state_pub.publish(joint_feedback_);
 }
 
-void MotorControlSet::command_Callback(can_msgs::Frame msg)
+void MotorControlSet::update(uint8_t index)
 {
-  can_send.publish(msg);
+  getMotor(index).RobStrite_Motor_move_control(commands_.at(index).torque, commands_.at(index).angle,
+                                               commands_.at(index).velocity, commands_.at(index).kp,
+                                               commands_.at(index).kd);
+}
+
+void MotorControlSet::commandCallback(motor_control::MotorCommand msg)
+{
+  uint8_t index = msg.index;
+  commands_.at(index).torque = msg.torque;
+  commands_.at(index).angle = msg.angle;
+  commands_.at(index).angle = msg.angle;
+  commands_.at(index).velocity = msg.velocity;
+  commands_.at(index).kp = msg.kp;
+  commands_.at(index).kd = msg.kd;
 }

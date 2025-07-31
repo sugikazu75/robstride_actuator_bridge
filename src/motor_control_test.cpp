@@ -17,7 +17,7 @@ int main(int argc, char** argv)
 {
   ros::init(argc, argv, "motor_control_test");
   ros::NodeHandle nm;
-  ros::Rate loop_rate(300);
+  ros::Rate loop_rate(600);
 
   std::vector<uint8_t> motor_ids = { 122, 123, 124, 125, 126, 127 };
   std::vector<uint8_t> motor_types = { MotorType::Robstride03, MotorType::Robstride03, MotorType::Robstride00,
@@ -36,14 +36,12 @@ int main(int argc, char** argv)
   }
   ros::Duration(0.1).sleep();
 
-  int id = 0;
-  int cnt = 0;
+  int index = 0;
   while (ros::ok())
   {
-    motor_controller->getMotor(id).RobStrite_Motor_move_control(0, 0, 1.0, 0, 10);
+    motor_controller->update(index);
 
-    id = (id + 1) % motor_ids.size();
-    cnt = (cnt + 1) % 1000;
+    index = (index + 1) % motor_ids.size();
 
     ros::spinOnce();
     loop_rate.sleep();
