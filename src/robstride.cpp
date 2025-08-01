@@ -1,7 +1,3 @@
-//
-// Created by Mu Shibo on 04/2024
-//
-
 #include "motor_control/robstride.h"
 
 /*******************************Mathmatic Function************************************/

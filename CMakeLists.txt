@@ -7,10 +7,11 @@ find_package(catkin REQUIRED)
 
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS
+  can_msgs
   message_generation
   roscpp
+  sensor_msgs
   std_msgs
-  can_msgs
   )
 
 ## Generate messages in the 'msg' folder
@@ -27,7 +28,7 @@ generate_messages(DEPENDENCIES
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES ${PROJECT_NAME}
-  CATKIN_DEPENDS message_runtime roscpp std_msgs
+  CATKIN_DEPENDS message_runtime roscpp sensor_msgs std_msgs
   )
 
 ###########
