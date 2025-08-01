@@ -50,6 +50,8 @@ private:
   std::vector<double> reductions_;
   std::vector<int> torque_enable_;
 
+  void servoOn(int index);
+
   void can1_rx_Callback(can_msgs::Frame msg);
   void commandCallback(motor_control::MotorCommand msg);
   void torqueEnableCallback(motor_control::MotorTorqueCommand msg);

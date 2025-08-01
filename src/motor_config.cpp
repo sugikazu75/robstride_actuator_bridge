@@ -101,6 +101,25 @@ void MotorControlSet::commandCallback(motor_control::MotorCommand msg)
   commands_.at(index).kd = msg.kd;
 }
 
+void MotorControlSet::servoOn(int index)
+{
+  if (index >= motor_num_)
+  {
+    std::cout << "exceed motor num" << std::endl;
+  }
+  else
+  {
+    if (!torque_enable_.at(index))
+    {
+      getMotor(index).Enable_Motor();
+      commands_.at(index).torque = 0.0;
+      commands_.at(index).angle = robstride_state_.pos[index];
+      commands_.at(index).velocity = 0.0;
+    }
+    torque_enable_.at(index) = 1;
+  }
+}
+
 void MotorControlSet::torqueEnableCallback(motor_control::MotorTorqueCommand msg)
 {
   if (msg.index.size() != msg.torque_enable.size())
@@ -112,21 +131,10 @@ void MotorControlSet::torqueEnableCallback(motor_control::MotorTorqueCommand msg
   for (int i = 0; i < msg.index.size(); i++)
   {
     int index = msg.index.at(i);
-    if (index >= motor_num_)
-    {
-      std::cout << "exceed motor num" << std::endl;
-      continue;
-    }
+    int torque_enable = msg.torque_enable.at(i);
+    if (torque_enable)
+      servoOn(index);
     else
-    {
-      if (!torque_enable_.at(msg.index.at(i)) && msg.torque_enable.at(i))
-      {
-        getMotor(index).Enable_Motor();
-        commands_.at(index).torque = 0.0;
-        commands_.at(index).angle = robstride_state_.pos[index];
-        commands_.at(index).velocity = 0.0;
-      }
-      torque_enable_.at(msg.index.at(i)) = msg.torque_enable.at(i);
-    }
+      getMotor(index).Disenable_Motor(0);
   }
 }
