@@ -18,6 +18,7 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(FILES
   MotorCommand.msg
   MotorFeedback.msg
+  MotorTorqueCommand.msg
   )
 
 ## Generate added messages and services with any dependencies listed here

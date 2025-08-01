@@ -9,22 +9,17 @@ MotorControlSet::MotorControlSet(ros::NodeHandle* node_handle, const std::string
 
   can_receive = node_handle->subscribe(can_rx, 100, &MotorControlSet::can1_rx_Callback, this);
   command_sub_ = node_handle->subscribe("robstride_command", 100, &MotorControlSet::commandCallback, this);
+  torque_enable_sub_ = node_handle->subscribe("torque_enable", 100, &MotorControlSet::torqueEnableCallback, this);
 
-  motor_ids_.clear();
-  motors_.clear();
-  commands_.clear();
-  reductions_.clear();
-  joint_state_.name.clear();
-  joint_state_.position.clear();
-  joint_state_.velocity.clear();
-  joint_state_.effort.clear();
-  for (int i = 0; i < motor_ids.size(); i++)
+  motor_num_ = motor_ids.size();
+  for (int i = 0; i < motor_num_; i++)
   {
     motor_ids_.push_back(motor_ids.at(i));
     motors_.push_back(RobStrite_Motor(static_cast<int>(motor_ids.at(i)), static_cast<MotorType>(motor_types.at(i)),
                                       node_handle, can_tx));
     commands_.push_back(motor_control::MotorCommand());
     reductions_.push_back(reductions.at(i));
+    torque_enable_.push_back(0);
 
     joint_state_.name.push_back(motor_names.at(i));
     joint_state_.position.push_back(0);
@@ -32,12 +27,12 @@ MotorControlSet::MotorControlSet(ros::NodeHandle* node_handle, const std::string
     joint_state_.effort.push_back(0);
   }
 
-  robstride_state_.pos.resize(motor_ids_.size());
-  robstride_state_.vel.resize(motor_ids_.size());
-  robstride_state_.tor.resize(motor_ids_.size());
-  robstride_state_.temp.resize(motor_ids_.size());
-  robstride_state_.error_code.resize(motor_ids_.size());
-  robstride_state_.pattern.resize(motor_ids_.size());
+  robstride_state_.pos.resize(motor_num_);
+  robstride_state_.vel.resize(motor_num_);
+  robstride_state_.tor.resize(motor_num_);
+  robstride_state_.temp.resize(motor_num_);
+  robstride_state_.error_code.resize(motor_num_);
+  robstride_state_.pattern.resize(motor_num_);
 }
 
 void MotorControlSet::shutdownCallback()
@@ -78,9 +73,16 @@ void MotorControlSet::can1_rx_Callback(can_msgs::Frame msg)
 
 void MotorControlSet::update(uint8_t index)
 {
-  getMotor(index).RobStrite_Motor_move_control(commands_.at(index).torque, commands_.at(index).angle,
-                                               commands_.at(index).velocity, commands_.at(index).kp,
-                                               commands_.at(index).kd);
+  if (!torque_enable_.at(index))
+  {
+    getMotor(index).Disenable_Motor(0);
+  }
+  else
+  {
+    getMotor(index).RobStrite_Motor_move_control(commands_.at(index).torque, commands_.at(index).angle,
+                                                 commands_.at(index).velocity, commands_.at(index).kp,
+                                                 commands_.at(index).kd);
+  }
 
   if (ros::Time::now().toSec() - joint_state_last_pub_time_ > joint_state_pub_interval_)
   {
@@ -94,8 +96,37 @@ void MotorControlSet::commandCallback(motor_control::MotorCommand msg)
   uint8_t index = msg.index;
   commands_.at(index).torque = msg.torque;
   commands_.at(index).angle = msg.angle;
-  commands_.at(index).angle = msg.angle;
   commands_.at(index).velocity = msg.velocity;
   commands_.at(index).kp = msg.kp;
   commands_.at(index).kd = msg.kd;
+}
+
+void MotorControlSet::torqueEnableCallback(motor_control::MotorTorqueCommand msg)
+{
+  if (msg.index.size() != msg.torque_enable.size())
+  {
+    std::cout << "size of index and torque is not identical" << std::endl;
+    return;
+  }
+
+  for (int i = 0; i < msg.index.size(); i++)
+  {
+    int index = msg.index.at(i);
+    if (index >= motor_num_)
+    {
+      std::cout << "exceed motor num" << std::endl;
+      continue;
+    }
+    else
+    {
+      if (!torque_enable_.at(msg.index.at(i)) && msg.torque_enable.at(i))
+      {
+        getMotor(index).Enable_Motor();
+        commands_.at(index).torque = 0.0;
+        commands_.at(index).angle = robstride_state_.pos[index];
+        commands_.at(index).velocity = 0.0;
+      }
+      torque_enable_.at(msg.index.at(i)) = msg.torque_enable.at(i);
+    }
+  }
 }
