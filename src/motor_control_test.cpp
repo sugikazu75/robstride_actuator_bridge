@@ -1,7 +1,3 @@
-//
-// Created by Mu Shibo on 12/2024
-//
-
 #include <sstream>
 #include <memory>
 #include "ros/ros.h"
@@ -16,15 +12,30 @@
 int main(int argc, char** argv)
 {
   ros::init(argc, argv, "motor_control_test");
-  ros::NodeHandle nm;
+  ros::NodeHandle nh;
   ros::Rate loop_rate(600);
 
-  std::vector<uint8_t> motor_ids = { 122, 123, 124, 125, 126, 127 };
-  std::vector<uint8_t> motor_types = { MotorType::Robstride03, MotorType::Robstride03, MotorType::Robstride00,
-                                       MotorType::Robstride00, MotorType::Robstride00, MotorType::Robstride00 };
+  std::vector<uint8_t> motor_ids(0);
+  std::vector<uint8_t> motor_types(0);
+
+  XmlRpc::XmlRpcValue all_servo_params;
+  nh.getParam("robstride", all_servo_params);
+  for(auto robstride_param : all_servo_params)
+    {
+      if(robstride_param.first.find("controller") != std::string::npos)
+        {
+          int id = robstride_param.second["id"];
+          std::string type = robstride_param.second["type"];
+          std::string name = robstride_param.second["name"];
+          ROS_INFO_STREAM("id: " << id << ", type: " << type << ", name: " << name);
+
+          motor_ids.push_back(id);
+          motor_types.push_back(XiaomiMotor::motorName2int(type));
+        }
+    }
 
   std::shared_ptr<MotorControlSet> motor_controller =
-      std::make_shared<MotorControlSet>(&nm, "can1_rx", "can1_tx", motor_ids, motor_types);
+      std::make_shared<MotorControlSet>(&nh, "can1_rx", "can1_tx", motor_ids, motor_types);
 
   ros::Duration(0.5).sleep();
   // enable the motor

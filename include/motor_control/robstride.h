@@ -30,6 +30,30 @@ enum MotorType
   Robstride03,
 };
 
+namespace XiaomiMotor
+{
+  inline int motorName2int(std::string motor_name)
+  {
+    if(motor_name ==  "Cybergear")
+      {
+        return static_cast<int>(MotorType::Cybergear);
+      }
+    else if (motor_name == "Robstride00")
+      {
+        return static_cast<int>(MotorType::Robstride00);
+      }
+    else if (motor_name ==  "Robstride03")
+      {
+        return static_cast<int>(MotorType::Robstride03);
+      }
+    else
+      {
+        std::cout << "invalid motor type" << std::endl;
+        return -1;
+      }
+  }
+}
+
 const std::map<MotorType, MotorLimits> motor_limit_map = {
   { Cybergear, { -4 * M_PI, 4 * M_PI, -30.0f, 30.0f, 0.0f, 500.0f, 0.0f, 5.0f, -12.0f, 12.0f } },
   { Robstride00, { -4 * M_PI, 4 * M_PI, -33.0f, 33.0f, 0.0f, 500.0f, 0.0f, 5.0f, -14.0f, 14.0f } },
