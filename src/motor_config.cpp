@@ -4,12 +4,17 @@ MotorControlSet::MotorControlSet(ros::NodeHandle* node_handle, const std::string
                                  const std::vector<uint8_t>& motor_ids, const std::vector<uint8_t> motor_types,
                                  const std::vector<std::string> motor_names, const std::vector<double> reductions)
 {
-  robstride_state_pub = node_handle->advertise<motor_control::MotorFeedback>("robstride_state", 100);
-  joint_state_pub_ = node_handle->advertise<sensor_msgs::JointState>("joint_states", 100);
+  robstride_state_pub = node_handle->advertise<motor_control::MotorFeedback>("robstride_state", 1);
+  joint_state_pub_ = node_handle->advertise<sensor_msgs::JointState>("joint_states", 1);
+  torque_state_pub_ = node_handle->advertise<motor_control::MotorTorqueCommand>("torque_state", 1);
 
   can_receive = node_handle->subscribe(can_rx, 100, &MotorControlSet::can1_rx_Callback, this);
-  command_sub_ = node_handle->subscribe("robstride_command", 100, &MotorControlSet::commandCallback, this);
+  motor_command_sub_ =
+      node_handle->subscribe("robstride_motor_command", 100, &MotorControlSet::motorCommandCallback, this);
+  joint_command_sub_ =
+      node_handle->subscribe("robstride_joint_command", 100, &MotorControlSet::jointCommandCallback, this);
   torque_enable_sub_ = node_handle->subscribe("torque_enable", 100, &MotorControlSet::torqueEnableCallback, this);
+  motor_calib_sub_ = node_handle->subscribe("robstride_calib", 100, &MotorControlSet::motorCalibCallback, this);
 
   motor_num_ = motor_ids.size();
   for (int i = 0; i < motor_num_; i++)
@@ -19,7 +24,7 @@ MotorControlSet::MotorControlSet(ros::NodeHandle* node_handle, const std::string
                                       node_handle, can_tx));
     commands_.push_back(motor_control::MotorCommand());
     reductions_.push_back(reductions.at(i));
-    torque_enable_.push_back(0);
+    torque_enable_.push_back(1);
 
     joint_state_.name.push_back(motor_names.at(i));
     joint_state_.position.push_back(0);
@@ -89,14 +94,36 @@ void MotorControlSet::update(uint8_t index)
     joint_state_pub_.publish(joint_state_);
     joint_state_last_pub_time_ = ros::Time::now().toSec();
   }
+
+  if (ros::Time::now().toSec() - torque_state_last_pub_time_ > torque_state_pub_interval_)
+  {
+    motor_control::MotorTorqueCommand torque_state;
+    for (int i = 0; i < motor_num_; i++)
+    {
+      torque_state.index.push_back(i);
+      torque_state.torque_enable.push_back(torque_enable_.at(i));
+    }
+    torque_state_pub_.publish(torque_state);
+    torque_state_last_pub_time_ = ros::Time::now().toSec();
+  }
 }
 
-void MotorControlSet::commandCallback(motor_control::MotorCommand msg)
+void MotorControlSet::motorCommandCallback(motor_control::MotorCommand msg)
 {
   uint8_t index = msg.index;
   commands_.at(index).torque = msg.torque;
   commands_.at(index).angle = msg.angle;
   commands_.at(index).velocity = msg.velocity;
+  commands_.at(index).kp = msg.kp;
+  commands_.at(index).kd = msg.kd;
+}
+
+void MotorControlSet::jointCommandCallback(motor_control::MotorCommand msg)
+{
+  uint8_t index = msg.index;
+  commands_.at(index).torque = msg.torque / reductions_.at(index);
+  commands_.at(index).angle = msg.angle * reductions_.at(index);
+  commands_.at(index).velocity = msg.velocity * reductions_.at(index);
   commands_.at(index).kp = msg.kp;
   commands_.at(index).kd = msg.kd;
 }
@@ -120,6 +147,12 @@ void MotorControlSet::servoOn(int index)
   }
 }
 
+void MotorControlSet::servoOff(int index)
+{
+  getMotor(index).Disenable_Motor(0);
+  torque_enable_.at(index) = 0;
+}
+
 void MotorControlSet::torqueEnableCallback(motor_control::MotorTorqueCommand msg)
 {
   if (msg.index.size() != msg.torque_enable.size())
@@ -135,6 +168,23 @@ void MotorControlSet::torqueEnableCallback(motor_control::MotorTorqueCommand msg
     if (torque_enable)
       servoOn(index);
     else
-      getMotor(index).Disenable_Motor(0);
+      servoOff(index);
+  }
+}
+
+void MotorControlSet::motorCalibCallback(std_msgs::UInt8MultiArray msg)
+{
+  for (int i = 0; i < msg.data.size(); i++)
+  {
+    int index = msg.data.at(i);
+    if (index >= motor_num_)
+    {
+      std::cout << "index for calub exceed motor num" << std::endl;
+      continue;
+    }
+    else
+    {
+      getMotor(index).Set_ZeroPos();
+    }
   }
 }

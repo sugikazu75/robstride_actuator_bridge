@@ -1,13 +1,12 @@
-#include <sstream>
-#include <memory>
-#include "ros/ros.h"
-#include "std_msgs/String.h"
-#include "can_msgs/Frame.h"
-#include "motor_control/motor_config.h"
-#include "motor_control/MotorFeedback.h"
+#include <ros/ros.h>
+#include <can_msgs/Frame.h>
+#include <motor_control/motor_config.h>
+#include <motor_control/MotorFeedback.h>
 
-#include "stdint.h"
-#include "math.h"
+#include <math.h>
+#include <memory>
+#include <sstream>
+#include <stdint.h>
 
 int main(int argc, char** argv)
 {

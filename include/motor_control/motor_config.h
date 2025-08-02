@@ -1,16 +1,18 @@
 #ifndef _MOTOR_CONFIG_H_
 #define _MOTOR_CONFIG_H_
 
-#include <vector>
-#include <memory>
-#include "ros/ros.h"
-#include "stdint.h"
-#include "can_msgs/Frame.h"
-#include "motor_control/MotorCommand.h"
-#include "motor_control/MotorFeedback.h"
-#include "motor_control/MotorTorqueCommand.h"
-#include "motor_control/robstride.h"
+#include <ros/ros.h>
+#include <can_msgs/Frame.h>
+#include <motor_control/MotorCommand.h>
+#include <motor_control/MotorFeedback.h>
+#include <motor_control/MotorTorqueCommand.h>
+#include <motor_control/robstride.h>
 #include <sensor_msgs/JointState.h>
+#include <std_msgs/UInt8MultiArray.h>
+
+#include <memory>
+#include <vector>
+#include <stdint.h>
 
 class MotorControlSet
 {
@@ -24,12 +26,15 @@ public:
 
   // create subscriber
   ros::Subscriber can_receive;
-  ros::Subscriber command_sub_;
+  ros::Subscriber joint_command_sub_;
+  ros::Subscriber motor_command_sub_;
   ros::Subscriber torque_enable_sub_;
+  ros::Subscriber motor_calib_sub_;
 
-  // creat publisher
+  // create publisher
   ros::Publisher robstride_state_pub;
   ros::Publisher joint_state_pub_;
+  ros::Publisher torque_state_pub_;
 
   motor_control::MotorFeedback robstride_state_;
   sensor_msgs::JointState joint_state_;
@@ -44,6 +49,8 @@ private:
   int motor_num_;
   double joint_state_pub_interval_ = 0.01;
   double joint_state_last_pub_time_ = 0;
+  double torque_state_pub_interval_ = 1.0;
+  double torque_state_last_pub_time_ = 0;
   std::vector<uint8_t> motor_ids_;
   std::vector<RobStrite_Motor> motors_;
   std::vector<motor_control::MotorCommand> commands_;
@@ -51,10 +58,13 @@ private:
   std::vector<int> torque_enable_;
 
   void servoOn(int index);
+  void servoOff(int index);
 
   void can1_rx_Callback(can_msgs::Frame msg);
-  void commandCallback(motor_control::MotorCommand msg);
+  void motorCommandCallback(motor_control::MotorCommand msg);
+  void jointCommandCallback(motor_control::MotorCommand msg);
   void torqueEnableCallback(motor_control::MotorTorqueCommand msg);
+  void motorCalibCallback(std_msgs::UInt8MultiArray msg);
 };
 
 #endif
