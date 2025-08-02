@@ -16,6 +16,7 @@
   <depend>std_msgs</depend>
   <depend>can_msgs</depend>
   <depend>sensor_msgs</depend>
+  <depend>socketcan_bridge</depend>
 
   <build_depend>message_generation</build_depend>
   <build_export_depend>message_generation</build_export_depend>
