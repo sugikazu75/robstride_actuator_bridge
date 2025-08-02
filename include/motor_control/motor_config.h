@@ -59,6 +59,7 @@ private:
 
   void servoOn(int index);
   void servoOff(int index);
+  void servoCalib(int index);
 
   void can1_rx_Callback(can_msgs::Frame msg);
   void motorCommandCallback(motor_control::MotorCommand msg);

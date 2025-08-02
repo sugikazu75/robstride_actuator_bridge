@@ -172,6 +172,12 @@ void MotorControlSet::torqueEnableCallback(motor_control::MotorTorqueCommand msg
   }
 }
 
+void MotorControlSet::servoCalib(int index)
+{
+  commands_.at(index).angle = 0;
+  getMotor(index).Set_ZeroPos();
+}
+
 void MotorControlSet::motorCalibCallback(std_msgs::UInt8MultiArray msg)
 {
   for (int i = 0; i < msg.data.size(); i++)
@@ -184,7 +190,7 @@ void MotorControlSet::motorCalibCallback(std_msgs::UInt8MultiArray msg)
     }
     else
     {
-      getMotor(index).Set_ZeroPos();
+      servoCalib(index);
     }
   }
 }
