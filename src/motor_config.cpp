@@ -153,6 +153,12 @@ void MotorControlSet::servoOff(int index)
   torque_enable_.at(index) = 0;
 }
 
+void MotorControlSet::servoCalib(int index)
+{
+  commands_.at(index).angle = 0;
+  getMotor(index).Set_ZeroPos();
+}
+
 void MotorControlSet::torqueEnableCallback(motor_control::MotorTorqueCommand msg)
 {
   if (msg.index.size() != msg.torque_enable.size())
@@ -170,12 +176,6 @@ void MotorControlSet::torqueEnableCallback(motor_control::MotorTorqueCommand msg
     else
       servoOff(index);
   }
-}
-
-void MotorControlSet::servoCalib(int index)
-{
-  commands_.at(index).angle = 0;
-  getMotor(index).Set_ZeroPos();
 }
 
 void MotorControlSet::motorCalibCallback(std_msgs::UInt8MultiArray msg)
