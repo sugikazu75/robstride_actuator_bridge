@@ -1,4 +1,4 @@
-#include "motor_control/robstride.h"
+#include <robstride_actuator_bridge/robstride.h>
 
 /*******************************Mathmatic Function************************************/
 float uint16_to_float(uint16_t x, float x_min, float x_max, int bits)

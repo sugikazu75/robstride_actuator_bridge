@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(motor_control)
+project(robstride_actuator_bridge)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -29,7 +29,7 @@ generate_messages(DEPENDENCIES
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES ${PROJECT_NAME}
-  CATKIN_DEPENDS message_runtime roscpp sensor_msgs std_msgs
+  CATKIN_DEPENDS can_msgs message_runtime roscpp sensor_msgs std_msgs
   )
 
 ###########
@@ -42,42 +42,29 @@ include_directories(
   )
 
 ## Declare a cpp library
-add_library(${PROJECT_NAME}
-  src/motor_config.cpp
+add_library(robstride_driver
   src/robstride.cpp
   )
 
-target_link_libraries(${PROJECT_NAME}
+target_link_libraries(robstride_driver
   ${catkin_LIBRARIES}
   )
 
-add_executable(motor_control_test
+add_library(robstride_controller
+  src/motor_config.cpp
+)
+
+target_link_libraries(robstride_controller
+robstride_driver
+${catkin_LIBRARIES}
+)
+
+add_executable(robstride_control_test
   src/motor_control_test.cpp
   )
 
-add_dependencies(motor_control_test
-  ${PROJECT_NAME}
-  ${catkin_EXPORTED_TARGETS}
-  )
-
-target_link_libraries(motor_control_test
-  ${PROJECT_NAME}
+target_link_libraries(robstride_control_test
+  robstride_driver
+  robstride_controller
   ${catkin_LIBRARIES}
-  )
-
-#############
-## Install ##
-#############
-
-# Mark executables and/or libraries for installation
-install(TARGETS ${PROJECT_NAME}
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-  )
-
-# Mark cpp header files for installation
-install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-  FILES_MATCHING PATTERN "*.h"
   )

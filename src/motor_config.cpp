@@ -1,12 +1,12 @@
-#include "motor_control/motor_config.h"
+#include <robstride_actuator_bridge/motor_config.h>
 
 MotorControlSet::MotorControlSet(ros::NodeHandle* node_handle, const std::string& can_rx, const std::string& can_tx,
                                  const std::vector<uint8_t>& motor_ids, const std::vector<uint8_t> motor_types,
                                  const std::vector<std::string> motor_names, const std::vector<double> reductions)
 {
-  robstride_state_pub = node_handle->advertise<motor_control::MotorFeedback>("robstride_state", 1);
+  robstride_state_pub = node_handle->advertise<robstride_actuator_bridge::MotorFeedback>("robstride_state", 1);
   joint_state_pub_ = node_handle->advertise<sensor_msgs::JointState>("joint_states", 1);
-  torque_state_pub_ = node_handle->advertise<motor_control::MotorTorqueCommand>("torque_state", 1);
+  torque_state_pub_ = node_handle->advertise<robstride_actuator_bridge::MotorTorqueCommand>("torque_state", 1);
 
   can_receive = node_handle->subscribe(can_rx, 100, &MotorControlSet::can1_rx_Callback, this);
   motor_command_sub_ =
@@ -22,7 +22,7 @@ MotorControlSet::MotorControlSet(ros::NodeHandle* node_handle, const std::string
     motor_ids_.push_back(motor_ids.at(i));
     motors_.push_back(RobStrite_Motor(static_cast<int>(motor_ids.at(i)), static_cast<MotorType>(motor_types.at(i)),
                                       node_handle, can_tx));
-    commands_.push_back(motor_control::MotorCommand());
+    commands_.push_back(robstride_actuator_bridge::MotorCommand());
     reductions_.push_back(reductions.at(i));
     torque_enable_.push_back(1);
 
@@ -97,7 +97,7 @@ void MotorControlSet::update(uint8_t index)
 
   if (ros::Time::now().toSec() - torque_state_last_pub_time_ > torque_state_pub_interval_)
   {
-    motor_control::MotorTorqueCommand torque_state;
+    robstride_actuator_bridge::MotorTorqueCommand torque_state;
     for (int i = 0; i < motor_num_; i++)
     {
       torque_state.index.push_back(i);
@@ -108,7 +108,7 @@ void MotorControlSet::update(uint8_t index)
   }
 }
 
-void MotorControlSet::motorCommandCallback(motor_control::MotorCommand msg)
+void MotorControlSet::motorCommandCallback(robstride_actuator_bridge::MotorCommand msg)
 {
   uint8_t index = msg.index;
   commands_.at(index).torque = msg.torque;
@@ -118,7 +118,7 @@ void MotorControlSet::motorCommandCallback(motor_control::MotorCommand msg)
   commands_.at(index).kd = msg.kd;
 }
 
-void MotorControlSet::jointCommandCallback(motor_control::MotorCommand msg)
+void MotorControlSet::jointCommandCallback(robstride_actuator_bridge::MotorCommand msg)
 {
   uint8_t index = msg.index;
   commands_.at(index).torque = msg.torque / reductions_.at(index);
@@ -159,7 +159,7 @@ void MotorControlSet::servoCalib(int index)
   getMotor(index).Set_ZeroPos();
 }
 
-void MotorControlSet::torqueEnableCallback(motor_control::MotorTorqueCommand msg)
+void MotorControlSet::torqueEnableCallback(robstride_actuator_bridge::MotorTorqueCommand msg)
 {
   if (msg.index.size() != msg.torque_enable.size())
   {

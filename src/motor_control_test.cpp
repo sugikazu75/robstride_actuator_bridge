@@ -1,7 +1,7 @@
 #include <ros/ros.h>
 #include <can_msgs/Frame.h>
-#include <motor_control/motor_config.h>
-#include <motor_control/MotorFeedback.h>
+#include <robstride_actuator_bridge/motor_config.h>
+#include <robstride_actuator_bridge/MotorFeedback.h>
 
 #include <math.h>
 #include <memory>

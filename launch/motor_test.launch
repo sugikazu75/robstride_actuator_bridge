@@ -5,6 +5,6 @@
         <remap from="received_messages" to="/can1_rx" />
     </node>
 
-    <node pkg="motor_control" type="motor_control_test" name="motor_ctrler" output="screen"/>
+    <node pkg="robstride_actuator_bridge" type="robstride_control_test" name="motor_ctrler" output="screen"/>
 
  </launch>

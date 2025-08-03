@@ -1,9 +1,10 @@
 #ifndef _ROBSTRIDE_H_
 #define _ROBSTRIDE_H_
 
-#include "ros/ros.h"
-#include "stdint.h"
-#include "can_msgs/Frame.h"
+#include <ros/ros.h>
+#include <can_msgs/Frame.h>
+
+#include <stdint.h>
 
 struct MotorLimits
 {

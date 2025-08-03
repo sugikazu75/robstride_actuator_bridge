@@ -3,10 +3,10 @@
 
 #include <ros/ros.h>
 #include <can_msgs/Frame.h>
-#include <motor_control/MotorCommand.h>
-#include <motor_control/MotorFeedback.h>
-#include <motor_control/MotorTorqueCommand.h>
-#include <motor_control/robstride.h>
+#include <robstride_actuator_bridge/MotorCommand.h>
+#include <robstride_actuator_bridge/MotorFeedback.h>
+#include <robstride_actuator_bridge/MotorTorqueCommand.h>
+#include <robstride_actuator_bridge/robstride.h>
 #include <sensor_msgs/JointState.h>
 #include <std_msgs/UInt8MultiArray.h>
 
@@ -36,7 +36,7 @@ public:
   ros::Publisher joint_state_pub_;
   ros::Publisher torque_state_pub_;
 
-  motor_control::MotorFeedback robstride_state_;
+  robstride_actuator_bridge::MotorFeedback robstride_state_;
   sensor_msgs::JointState joint_state_;
 
   void update(uint8_t index);
@@ -53,7 +53,7 @@ private:
   double torque_state_last_pub_time_ = 0;
   std::vector<uint8_t> motor_ids_;
   std::vector<RobStrite_Motor> motors_;
-  std::vector<motor_control::MotorCommand> commands_;
+  std::vector<robstride_actuator_bridge::MotorCommand> commands_;
   std::vector<double> reductions_;
   std::vector<int> torque_enable_;
 
@@ -62,9 +62,9 @@ private:
   void servoCalib(int index);
 
   void can1_rx_Callback(can_msgs::Frame msg);
-  void motorCommandCallback(motor_control::MotorCommand msg);
-  void jointCommandCallback(motor_control::MotorCommand msg);
-  void torqueEnableCallback(motor_control::MotorTorqueCommand msg);
+  void motorCommandCallback(robstride_actuator_bridge::MotorCommand msg);
+  void jointCommandCallback(robstride_actuator_bridge::MotorCommand msg);
+  void torqueEnableCallback(robstride_actuator_bridge::MotorTorqueCommand msg);
   void motorCalibCallback(std_msgs::UInt8MultiArray msg);
 };
 
