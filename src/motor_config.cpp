@@ -6,14 +6,16 @@ MotorControlSet::MotorControlSet(ros::NodeHandle* node_handle, const std::string
 {
   robstride_state_pub = node_handle->advertise<robstride_actuator_bridge::MotorFeedback>("robstride_state", 1);
   joint_state_pub_ = node_handle->advertise<sensor_msgs::JointState>("joint_states", 1);
-  torque_state_pub_ = node_handle->advertise<robstride_actuator_bridge::MotorTorqueCommand>("torque_state", 1);
+  torque_state_pub_ =
+      node_handle->advertise<robstride_actuator_bridge::MotorTorqueCommand>("robstride_torque_state", 1);
 
   can_receive = node_handle->subscribe(can_rx, 100, &MotorControlSet::can1_rx_Callback, this);
   motor_command_sub_ =
       node_handle->subscribe("robstride_motor_command", 100, &MotorControlSet::motorCommandCallback, this);
   joint_command_sub_ =
       node_handle->subscribe("robstride_joint_command", 100, &MotorControlSet::jointCommandCallback, this);
-  torque_enable_sub_ = node_handle->subscribe("torque_enable", 100, &MotorControlSet::torqueEnableCallback, this);
+  torque_enable_sub_ =
+      node_handle->subscribe("robstride_torque_enable", 100, &MotorControlSet::torqueEnableCallback, this);
   motor_calib_sub_ = node_handle->subscribe("robstride_calib", 100, &MotorControlSet::motorCalibCallback, this);
 
   motor_num_ = motor_ids.size();
