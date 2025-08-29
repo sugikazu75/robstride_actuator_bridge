@@ -28,7 +28,7 @@ generate_messages(DEPENDENCIES
 
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES ${PROJECT_NAME}
+  LIBRARIES robstride_driver robstride_controller
   CATKIN_DEPENDS can_msgs message_runtime roscpp sensor_msgs std_msgs
   )
 
@@ -41,28 +41,24 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
   )
 
-## Declare a cpp library
 add_library(robstride_driver
   src/robstride.cpp
   )
-
 target_link_libraries(robstride_driver
   ${catkin_LIBRARIES}
   )
 
 add_library(robstride_controller
   src/motor_config.cpp
-)
-
+  )
 target_link_libraries(robstride_controller
-robstride_driver
-${catkin_LIBRARIES}
-)
+  robstride_driver
+  ${catkin_LIBRARIES}
+  )
 
 add_executable(robstride_control_test
   src/motor_control_test.cpp
   )
-
 target_link_libraries(robstride_control_test
   robstride_driver
   robstride_controller
