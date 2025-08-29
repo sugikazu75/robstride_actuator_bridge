@@ -93,6 +93,7 @@ void MotorControlSet::update(uint8_t index)
 
   if (ros::Time::now().toSec() - joint_state_last_pub_time_ > joint_state_pub_interval_)
   {
+    joint_state_.header.stamp = ros::Time::now();
     joint_state_pub_.publish(joint_state_);
     joint_state_last_pub_time_ = ros::Time::now().toSec();
   }
