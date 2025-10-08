@@ -16,6 +16,8 @@ MotorControlSet::MotorControlSet(ros::NodeHandle* node_handle, const std::string
       node_handle->subscribe("robstride_joint_command", 100, &MotorControlSet::jointCommandCallback, this);
   torque_enable_sub_ =
       node_handle->subscribe("robstride_torque_enable", 100, &MotorControlSet::torqueEnableCallback, this);
+  servo_on_sub_ = node_handle->subscribe("robstride_servo_on", 100, &MotorControlSet::servoOnCallback, this);
+  servo_off_sub_ = node_handle->subscribe("robstride_servo_off", 100, &MotorControlSet::servoOffCallback, this);
   motor_calib_sub_ = node_handle->subscribe("robstride_calib", 100, &MotorControlSet::motorCalibCallback, this);
 
   motor_num_ = motor_ids.size();
@@ -177,6 +179,22 @@ void MotorControlSet::torqueEnableCallback(robstride_actuator_bridge::MotorTorqu
       servoOn(index);
     else
       servoOff(index);
+  }
+}
+
+void MotorControlSet::servoOnCallback(std_msgs::Empty msg)
+{
+  for (int i = 0; i < motor_num_; i++)
+  {
+    servoOn(i);
+  }
+}
+
+void MotorControlSet::servoOffCallback(std_msgs::Empty msg)
+{
+  for (int i = 0; i < motor_num_; i++)
+  {
+    servoOff(i);
   }
 }
 

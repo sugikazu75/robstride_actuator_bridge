@@ -8,6 +8,7 @@
 #include <robstride_actuator_bridge/MotorTorqueCommand.h>
 #include <robstride_actuator_bridge/robstride.h>
 #include <sensor_msgs/JointState.h>
+#include <std_msgs/Empty.h>
 #include <std_msgs/UInt8MultiArray.h>
 
 #include <memory>
@@ -29,6 +30,8 @@ public:
   ros::Subscriber joint_command_sub_;
   ros::Subscriber motor_command_sub_;
   ros::Subscriber torque_enable_sub_;
+  ros::Subscriber servo_on_sub_;
+  ros::Subscriber servo_off_sub_;
   ros::Subscriber motor_calib_sub_;
 
   // create publisher
@@ -65,6 +68,8 @@ private:
   void motorCommandCallback(robstride_actuator_bridge::MotorCommand msg);
   void jointCommandCallback(robstride_actuator_bridge::MotorCommand msg);
   void torqueEnableCallback(robstride_actuator_bridge::MotorTorqueCommand msg);
+  void servoOnCallback(std_msgs::Empty msg);
+  void servoOffCallback(std_msgs::Empty msg);
   void motorCalibCallback(std_msgs::UInt8MultiArray msg);
 };
 
