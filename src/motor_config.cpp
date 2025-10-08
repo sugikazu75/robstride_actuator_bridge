@@ -152,7 +152,6 @@ void MotorControlSet::servoOn(int index)
 
 void MotorControlSet::servoOff(int index)
 {
-  getMotor(index).Disenable_Motor(0);
   torque_enable_.at(index) = 0;
 }
 
